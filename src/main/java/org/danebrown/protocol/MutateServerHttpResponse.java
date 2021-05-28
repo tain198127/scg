@@ -1,5 +1,7 @@
 package org.danebrown.protocol;
 
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
@@ -12,12 +14,14 @@ import org.springframework.util.MimeType;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoProcessor;
+import reactor.netty.FutureMono;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -27,10 +31,12 @@ import java.util.function.Function;
  *
  * @author danebrown
  */
+@Slf4j
 public class MutateServerHttpResponse extends AbstractServerHttpResponse {
     private Flux<DataBuffer> body;
     private Function<Flux<DataBuffer>, Mono<Void>> writeHandler;
-    private DataBuffer response;
+    private CompletableFuture<DataBuffer> response = new CompletableFuture<>();
+    private Mono<DataBuffer> monoResp = FutureMono.fromFuture(response);
 
     public MutateServerHttpResponse() {
         this(new DefaultDataBufferFactory());
@@ -48,10 +54,15 @@ public class MutateServerHttpResponse extends AbstractServerHttpResponse {
                             .doOnNext(new Consumer<DataBuffer>() {
                                 @Override
                                 public void accept(DataBuffer dataBuffer) {
-                                    response = dataBuffer;
+                                    log.info("MutateServerHttpResponse doOnNext");
+
+                                    response.complete(dataBuffer);
                                 }
                             })
-                            .doOnComplete(completion::onComplete)
+                            .doOnComplete(()->{
+                                log.info("MutateServerHttpResponse doOnComplete");
+                                completion.onComplete();
+                            })
                             .doOnError(completion::onError);
             completion.getClass();
             this.body = fluxBody.cache();
@@ -66,8 +77,9 @@ public class MutateServerHttpResponse extends AbstractServerHttpResponse {
         this.writeHandler = writeHandler;
     }
 
+    @SneakyThrows
     public <T> T getNativeResponse() {
-        return (T) this.response;
+        return (T) this.response.get();
     }
 
     protected void applyStatusCode() {

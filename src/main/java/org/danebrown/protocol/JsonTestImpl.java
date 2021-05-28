@@ -13,7 +13,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -57,24 +56,20 @@ public class JsonTestImpl {
         voidMono.subscribe();
 
         Mono<String> rest =
-                voidMono.doOnSuccess(new Consumer<Void>() {
-                    @Override
-                    public void accept(Void aVoid) {
-                        System.out.println("ok");
-                    }
-                }).as(new Function<Mono<Void>,
-                Mono<String>>() {
+                voidMono
+            .as(new Function<Mono<Void>, Mono<String>>() {
             @Override
             public Mono<String> apply(Mono<Void> voidMono) {
+                log.info("dubbo 的 apply");
                 DataBuffer buffer = exchange.getResponse().getNativeResponse();
                 String s = buffer.toString(charset);
                 return Mono.just(s);
-//                 return exchange.getResponse().getBodyAsString();
             }
-        });
+        }).flatMap(r->{
+            return Mono.just(r);
+                });
         return rest;
 
 
-//        return Flux.just("ok");
     }
 }
