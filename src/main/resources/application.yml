@@ -1,0 +1,66 @@
+server:
+  port: 8090
+spring:
+  application:
+    name: spring-cloud-gateway
+  cloud:
+    sentinel:
+      # dasobard 配置
+      transport:
+        dashboard: localhost:8888
+        port: 8719
+      # 是否启用spring cloud的sentinel
+      enabled: false
+      #是否在系统启动的时候，就注册flowrule等
+      eager: false
+      filter:
+        enabled: true
+    gateway:
+      enabled: true
+      discovery:
+        locator:
+          lower-case-service-id: true
+      routes:
+        # Add your routes here.
+        - id: test
+          uri: http://127.0.0.1:8080/seq
+          predicates:
+            - Method=POST,GET
+            - Path=/test/**
+        - id: thread
+          uri: http://127.0.0.1:8080/seq
+          predicates:
+            - Method=POST,GET
+            - Path=/thread/**
+        - id: block
+          uri: http://127.0.0.1:8080/seq
+          predicates:
+            - Method=POST,GET
+            - Path=/block/**
+        - id: mix
+          uri: http://127.0.0.1:8080/seq
+          predicates:
+            - Method=POST,GET
+            - Path=/mix/**
+        - id: other
+          uri: http://127.0.0.1:8080/seq
+          predicates:
+            - Method=POST,GET
+            - Path=/other/**
+
+reactor:
+  core:
+    publisher:
+      Hooks:
+        GLOBAL_TRACE: true
+
+
+
+management:
+  endpoint:
+    web:
+      exposure:
+        - include=*
+logging:
+  level:
+    root: INFO
