@@ -3,7 +3,6 @@ package org.danebrown.protocol;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.adapter.HttpWebHandlerAdapter;
@@ -61,9 +60,10 @@ public class JsonTestImpl {
             @Override
             public Mono<String> apply(Mono<Void> voidMono) {
                 log.info("dubbo 的 apply");
-                DataBuffer buffer = exchange.getResponse().getNativeResponse();
-                String s = buffer.toString(charset);
-                return Mono.just(s);
+                Mono<String> buffer =
+                        exchange.getResponse().getNativeResponse();
+
+                return buffer;
             }
         }).flatMap(r->{
             return Mono.just(r);

@@ -35,8 +35,9 @@ import java.util.function.Function;
 public class MutateServerHttpResponse extends AbstractServerHttpResponse {
     private Flux<DataBuffer> body;
     private Function<Flux<DataBuffer>, Mono<Void>> writeHandler;
-    private CompletableFuture<DataBuffer> response = new CompletableFuture<>();
-    private Mono<DataBuffer> monoResp = FutureMono.fromFuture(response);
+    private CompletableFuture<String> response = new CompletableFuture<>();
+    private Mono<String> monoResp = FutureMono.fromFuture(response);
+    private Charset charset = StandardCharsets.UTF_8;
 
     public MutateServerHttpResponse() {
         this(new DefaultDataBufferFactory());
@@ -55,8 +56,8 @@ public class MutateServerHttpResponse extends AbstractServerHttpResponse {
                                 @Override
                                 public void accept(DataBuffer dataBuffer) {
                                     log.info("MutateServerHttpResponse doOnNext");
-
-                                    response.complete(dataBuffer);
+                                    String s = dataBuffer.toString(charset);
+                                    response.complete(s);
                                 }
                             })
                             .doOnComplete(()->{
@@ -79,7 +80,7 @@ public class MutateServerHttpResponse extends AbstractServerHttpResponse {
 
     @SneakyThrows
     public <T> T getNativeResponse() {
-        return (T) this.response.get();
+        return (T) monoResp;
     }
 
     protected void applyStatusCode() {
