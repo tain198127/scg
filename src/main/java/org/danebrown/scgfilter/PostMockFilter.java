@@ -8,6 +8,7 @@ import io.netty.util.concurrent.FastThreadLocalThread;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.danebrown.mode.ResponseMod;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -32,17 +34,22 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 public class PostMockFilter implements GlobalFilter, Ordered {
 
+    Flux<String> matcher = Flux.fromArray(new String[]{"block", "mix", "thread"});
 
     @SneakyThrows
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        if (!matcher.any(s -> exchange.getRequest().getURI().getPath().contains(s)).block()) {
+            return chain.filter(exchange);
+        }
+
         log.info("PreMockFilter");
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(HttpStatus.OK);
         List<String> header = Lists.newArrayList();
         header.add("application/json");
         response.getHeaders().put(HttpHeaders.CONTENT_TYPE, header);
-        Mono<ResponseMod> mono = Mono.fromCallable(()->{
+        Mono<ResponseMod> mono = Mono.fromCallable(() -> {
             ResponseMod responseMod = new ResponseMod();
             responseMod.setBody("123");
             responseMod.setCode("456");
@@ -78,19 +85,17 @@ public class PostMockFilter implements GlobalFilter, Ordered {
 
         } else if (exchange.getRequest().getURI().getPath().contains("thread")) {
             mono = mono
-//                    .publishOn(Schedulers.elastic())
+                    //                    .publishOn(Schedulers.elastic())
                     .doOnNext(responseMod1 -> {
                         try {
                             FastThreadLocalThread.sleep(500);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        log.info("ThreadLocalContext:{}",
-                                ThreadLocalContext.idx.get());
+                        log.info("ThreadLocalContext:{}", ThreadLocalContext.idx.get());
                         log.info("thread");
                         responseMod1.setCode("thread");
-                    })
-                    .filter(mm->{
+                    }).filter(mm -> {
                         log.info("第二个publish");
                         return true;
                     })

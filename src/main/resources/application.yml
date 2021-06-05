@@ -17,16 +17,21 @@ spring:
         enabled: true
     gateway:
       enabled: true
-      discovery:
-        locator:
-          lower-case-service-id: true
+#      discovery:
+#        locator:
+#          lower-case-service-id: true
       routes:
-        # Add your routes here.
+#         Add your routes here.
         - id: test
-          uri: http://127.0.0.1:8080/seq
+          uri: http://127.0.0.1:8080
           predicates:
             - Method=POST,GET
             - Path=/test/**
+          filters:
+            - AddRequestHeader=X-Request-red, blue
+            - AddRequestParameter=red, blue
+            - RewritePath=/test/, /seq/
+
         - id: thread
           uri: http://127.0.0.1:8080/seq
           predicates:
@@ -47,6 +52,11 @@ spring:
           predicates:
             - Method=POST,GET
             - Path=/other/**
+        - id: forward
+          uri: http://127.0.0.1:8080/seq
+          predicates:
+            - Method=POST,GET
+            - Path=/hello/**
 
 reactor:
   core:
@@ -55,12 +65,8 @@ reactor:
         GLOBAL_TRACE: true
 
 
+management.endpoints.web.exposure.include: '*'
 
-management:
-  endpoint:
-    web:
-      exposure:
-        - include=*
 logging:
   level:
-    root: INFO
+    root: DEBUG
