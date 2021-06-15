@@ -62,14 +62,14 @@ public class PostMockFilter implements GlobalFilter, Ordered {
             responseMod.setBody("error");
             responseMod.setCode("301");
             exchange.getAttributes().put("response",responseMod);
-//            Throwable t = new RuntimeException("block");
-//            Tracer.trace(t);
+            Throwable t = new RuntimeException("block");
+            Tracer.trace(t);
 //            Mono.defer(()->{
 //                Throwable tt = new RuntimeException("block");
 //                Tracer.trace(tt);
 //                return Mono.just(tt);
 //            });
-//            return Mono.error(t);
+            return Mono.error(t);
 //            mono =  mono.map((mono1) -> {
 //                log.error("block");
 //
@@ -94,7 +94,7 @@ public class PostMockFilter implements GlobalFilter, Ordered {
 //                mono.setCode("mix");
                 if (ThreadLocalRandom.current().nextBoolean()) {
                     log.error("mix-->出错");
-                    Throwable t = new DegradeException("block");
+                    Throwable t = new RuntimeException("block");
                     Tracer.trace(t);
                     return Mono.error(t);
                 }
