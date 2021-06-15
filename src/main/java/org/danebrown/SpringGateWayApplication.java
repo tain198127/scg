@@ -14,7 +14,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 public class SpringGateWayApplication
 {
     public static void main(String[] args) {
-        Constants.ON=false;
+//        Constants.ON=false;
         SpringApplication.run(SpringGateWayApplication.class, args);
     }
 }

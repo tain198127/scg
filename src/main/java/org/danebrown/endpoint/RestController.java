@@ -11,8 +11,22 @@ import org.springframework.web.bind.annotation.GetMapping;
  * @author danebrown
  */
 @Component
-@RestControllerEndpoint(id = "test")
+@RestControllerEndpoint(id = "edp")
 public class RestController {
+    /**
+     * 配置：management.endpoint.gateway.enabled=true # default value
+     * management.endpoints.web.exposure.include=*
+     * 端点：
+     * GET /actuator/gateway/globalfilters
+     * GET /actuator/gateway/routefilters
+     * POST /actuator/gateway/refresh
+     * GET /actuator/gateway/routes
+     * GET /actuator/gateway/routes/{id}
+     * @return
+     */
+    //
+//
+//    /actuator/gateway/globalfilters
     @GetMapping("getUser")
     public String getUser() {
         return "I am admin";

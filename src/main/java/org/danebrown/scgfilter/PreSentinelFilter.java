@@ -80,7 +80,7 @@ public class PreSentinelFilter implements GlobalFilter, Ordered {
                     r -> r.getResourceMode() == SentinelGatewayConstants.RESOURCE_MODE_CUSTOM_API_NAME);
             String origin = Optional.ofNullable(GatewayCallbackManager.getRequestOriginParser())
                     .map(f -> f.apply(exchange))
-                    .orElse("");
+                    .orElse("default");
             asyncResult = asyncResult.transform(
                     new SentinelReactorTransformer<>(new EntryConfig(resourceKey, ResourceTypeConstants.COMMON_API_GATEWAY,
                             EntryType.IN, 1, params, new ContextConfig(contextName(resourceKey), origin)))
@@ -96,7 +96,8 @@ public class PreSentinelFilter implements GlobalFilter, Ordered {
                     .map(f -> f.apply(exchange))
                     .orElse("");
             asyncResult = asyncResult.transform(
-                    new SentinelReactorTransformer<>(new EntryConfig(routeId, ResourceTypeConstants.COMMON_API_GATEWAY,
+                    new SentinelReactorTransformer<>(new EntryConfig(routeId,
+                            ResourceTypeConstants.COMMON,
                             EntryType.IN, 1, params, new ContextConfig(contextName(routeId), origin)))
             );
         }
@@ -106,7 +107,8 @@ public class PreSentinelFilter implements GlobalFilter, Ordered {
             Object[] params = paramParser.parseParameterFor(apiName, exchange,
                     r -> r.getResourceMode() == SentinelGatewayConstants.RESOURCE_MODE_CUSTOM_API_NAME);
             asyncResult = asyncResult.transform(
-                    new SentinelReactorTransformer<>(new EntryConfig(apiName, ResourceTypeConstants.COMMON_API_GATEWAY,
+                    new SentinelReactorTransformer<>(new EntryConfig(apiName,
+                            ResourceTypeConstants.COMMON_API_GATEWAY,
                             EntryType.IN, 1, params))
             );
         }

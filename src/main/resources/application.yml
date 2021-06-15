@@ -10,9 +10,9 @@ spring:
         dashboard: localhost:8888
         port: 8719
       # 是否启用spring cloud的sentinel
-      enabled: false
+      enabled: true
       #是否在系统启动的时候，就注册flowrule等
-      eager: false
+      eager: true
       filter:
         enabled: true
     gateway:
@@ -26,39 +26,41 @@ spring:
           uri: http://127.0.0.1:8080
           predicates:
             - Method=POST,GET
-            - Path=/test/**
+            - Path=/test/**,/block/**,/thread/**,/mix/**,/other/**,/forward/**
           filters:
             - AddRequestHeader=X-Request-red, blue
             - AddRequestParameter=red, blue
-            - RewritePath=/test/, /seq/
+            - RewritePath=/[a-zA-z0-9]*/, /seq/
 
-        - id: thread
-          uri: http://127.0.0.1:8080/seq
-          predicates:
-            - Method=POST,GET
-            - Path=/thread/**
-        - id: block
-          uri: http://127.0.0.1:8080/seq
-          predicates:
-            - Method=POST,GET
-            - Path=/block/**
-        - id: mix
-          uri: http://127.0.0.1:8080/seq
-          predicates:
-            - Method=POST,GET
-            - Path=/mix/**
-        - id: other
-          uri: http://127.0.0.1:8080/seq
-          predicates:
-            - Method=POST,GET
-            - Path=/other/**
-        - id: forward
-          uri: http://127.0.0.1:8080/seq
-          predicates:
-            - Method=POST,GET
-            - Path=/hello/**
+#        - id: thread
+#          uri: http://127.0.0.1:8080/seq
+#          predicates:
+#            - Method=POST,GET
+#            - Path=/thread/**
+#        - id: block
+#          uri: http://127.0.0.1:8080/seq
+#          predicates:
+#            - Method=POST,GET
+#            - Path=/block/**
+#        - id: mix
+#          uri: http://127.0.0.1:8080/seq
+#          predicates:
+#            - Method=POST,GET
+#            - Path=/mix/**
+#        - id: other
+#          uri: http://127.0.0.1:8080/seq
+#          predicates:
+#            - Method=POST,GET
+#            - Path=/other/**
+#        - id: forward
+#          uri: http://127.0.0.1:8080/seq
+#          predicates:
+#            - Method=POST,GET
+#            - Path=/hello/**
 
 reactor:
+  trace:
+    operatorStacktrace: true
   core:
     publisher:
       Hooks:

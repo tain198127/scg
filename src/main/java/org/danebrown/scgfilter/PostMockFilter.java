@@ -57,36 +57,53 @@ public class PostMockFilter implements GlobalFilter, Ordered {
             return responseMod;
         });
 
-        if (exchange.getRequest().getURI().getPath().contains("block")) {
-            mono.doOnNext((mono1) -> {
-                log.error("block");
+        if (exchange.getRequest().getQueryParams().toSingleValueMap().containsValue("block")) {
+            ResponseMod responseMod = new ResponseMod();
+            responseMod.setBody("error");
+            responseMod.setCode("301");
+            exchange.getAttributes().put("response",responseMod);
+//            Throwable t = new RuntimeException("block");
+//            Tracer.trace(t);
+//            Mono.defer(()->{
+//                Throwable tt = new RuntimeException("block");
+//                Tracer.trace(tt);
+//                return Mono.just(tt);
+//            });
+//            return Mono.error(t);
+//            mono =  mono.map((mono1) -> {
+//                log.error("block");
+//
+//                mono1.setCode("block");
+//
+//
+////                Throwable t = new RuntimeException("block");
+////                Tracer.trace(t);
+//
+//
+//                //
+////                DataBuffer byteBuffer = exchange.getResponse().bufferFactory().wrap(JSON.toJSONBytes(mono1));
+////
+////                response.setStatusCode(HttpStatus.OK);
+////                exchange.getAttributes().put("response", mono1);
+////                response.writeWith(Mono.just(byteBuffer));
+//                return mono1;
+//            });
+        } else if (exchange.getRequest().getQueryParams().toSingleValueMap().containsValue("mix")) {
 
-                mono1.setCode("block");
-
-
-                Throwable t = new RuntimeException("block");
-
-                DataBuffer byteBuffer = exchange.getResponse().bufferFactory().wrap(JSON.toJSONBytes(mono1));
-
-                response.setStatusCode(HttpStatus.OK);
-                exchange.getAttributes().put("response", mono1);
-                response.writeWith(Mono.just(byteBuffer));
-            });
-        } else if (exchange.getRequest().getURI().getPath().contains("mix")) {
-            mono.doOnNext((mono1) -> {
                 log.info("mix");
-                mono1.setCode("mix");
+//                mono.setCode("mix");
                 if (ThreadLocalRandom.current().nextBoolean()) {
                     log.error("mix-->出错");
                     Throwable t = new DegradeException("block");
                     Tracer.trace(t);
+                    return Mono.error(t);
                 }
-            });
 
-        } else if (exchange.getRequest().getURI().getPath().contains("thread")) {
+
+        } else if (exchange.getRequest().getQueryParams().toSingleValueMap().containsValue("thread")) {
             mono = mono
                     //                    .publishOn(Schedulers.elastic())
-                    .doOnNext(responseMod1 -> {
+                    .map(responseMod1 -> {
                         try {
                             FastThreadLocalThread.sleep(500);
                         } catch (InterruptedException e) {
@@ -95,6 +112,7 @@ public class PostMockFilter implements GlobalFilter, Ordered {
                         log.info("ThreadLocalContext:{}", ThreadLocalContext.idx.get());
                         log.info("thread");
                         responseMod1.setCode("thread");
+                        return responseMod1;
                     }).filter(mm -> {
                         log.info("第二个publish");
                         return true;
@@ -107,6 +125,8 @@ public class PostMockFilter implements GlobalFilter, Ordered {
             DataBuffer byteBuffer = exchange.getResponse().bufferFactory().wrap(JSON.toJSONBytes(res));
             response.setStatusCode(HttpStatus.OK);
             log.info("flatMap");
+            Throwable tt = new RuntimeException("block");
+            Tracer.trace(tt);
             return response.writeWith(Mono.just(byteBuffer));
         });
 

@@ -56,8 +56,8 @@ public class SentinelExceptionHandler implements WebExceptionHandler {
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
         ResponseMod error = new ResponseMod();
         log.info("SentinelExceptionHandler");
-        error.setCode("ERROR");
-        error.setBody("ERROR");
+        error.setCode("限流");
+        error.setBody("限流");
         //限流
 //        if(FlowException.isBlockException(ex)){
 //            log.error("请求:[{}]被限流",exchange.getRequest().getPath(),ex);
@@ -73,7 +73,7 @@ public class SentinelExceptionHandler implements WebExceptionHandler {
             if(exchange.getAttributes().containsKey("response")){
                 ResponseMod json = exchange.getAttribute("response");
 
-                json.setCode("BOLCK");
+                json.setCode("Gradle");
                 DataBuffer dataBuffer =
                         exchange.getResponse().bufferFactory().wrap(JSON.toJSONBytes(json));
 

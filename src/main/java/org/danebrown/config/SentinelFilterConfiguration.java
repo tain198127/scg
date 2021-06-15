@@ -187,10 +187,10 @@ public class SentinelFilterConfiguration {
         /**
          * 获取请求origin的一个解析器
          */
-        GatewayCallbackManager.setRequestOriginParser((req)->{
-            RequestMod requestMod = (RequestMod) req.getAttributes().get(OBJECT_KEY);
-            return requestMod.getOrigin();
-        });
+//        GatewayCallbackManager.setRequestOriginParser((req)->{
+//            RequestMod requestMod = (RequestMod) req.getAttributes().get(OBJECT_KEY);
+//            return requestMod.getOrigin();
+//        });
 
         StatisticSlotCallbackRegistry.addEntryCallback("block", new ProcessorSlotEntryCallback<DefaultNode>() {
             @Override
@@ -268,8 +268,8 @@ public class SentinelFilterConfiguration {
 
         //QPS限流
         FlowRule rule2 = new FlowRule();
-        rule2.setResource("test");
-        rule2.setCount(10);
+        rule2.setResource("testApi");
+        rule2.setCount(1);
         rule2.setGrade(RuleConstant.FLOW_GRADE_QPS);
         rule2.setLimitApp("default");
         rules.add(rule2);
@@ -282,23 +282,23 @@ public class SentinelFilterConfiguration {
         rule3.setLimitApp("default");
         rules.add(rule3);
 
-        for (int i=0;i < 1000; i++){
-            FlowRule ruleTest = new FlowRule();
-            ruleTest.setResource("mix"+i);
-            ruleTest.setCount(5);
-            ruleTest.setGrade(RuleConstant.FLOW_GRADE_QPS);
-            ruleTest.setLimitApp("default");
-            rules.add(ruleTest);
-        }
+//        for (int i=0;i < 1000; i++){
+//            FlowRule ruleTest = new FlowRule();
+//            ruleTest.setResource("mix"+i);
+//            ruleTest.setCount(5);
+//            ruleTest.setGrade(RuleConstant.FLOW_GRADE_QPS);
+//            ruleTest.setLimitApp("default");
+//            rules.add(ruleTest);
+//        }
 
         FlowRuleManager.loadRules(rules);
     }
     private void initCustomizedApis() {
         Set<ApiDefinition> definitions = new HashSet<>();
-        ApiDefinition api1 = new ApiDefinition("some_customized_api")
+        ApiDefinition api1 = new ApiDefinition("testApi")
                 .setPredicateItems(new HashSet<ApiPredicateItem>() {{
                     add(new ApiPathPredicateItem().setPattern("/ahas"));
-                    add(new ApiPathPredicateItem().setPattern("/product/**")
+                    add(new ApiPathPredicateItem().setPattern("/seq/**")
                             .setMatchStrategy(SentinelGatewayConstants.URL_MATCH_STRATEGY_PREFIX));
                 }});
         ApiDefinition api2 = new ApiDefinition("another_customized_api")
@@ -313,8 +313,11 @@ public class SentinelFilterConfiguration {
 
     private void initGatewayRules() {
         Set<GatewayFlowRule> rules = new HashSet<>();
-        rules.add(new GatewayFlowRule("aliyun_route")
-                .setCount(10)
+        rules.add(new GatewayFlowRule("testApi")
+                .setCount(1)
+                .setControlBehavior(RuleConstant.CONTROL_BEHAVIOR_RATE_LIMITER)
+                .setGrade(RuleConstant.FLOW_GRADE_QPS)
+                .setResourceMode(SentinelGatewayConstants.RESOURCE_MODE_CUSTOM_API_NAME)
                 .setIntervalSec(1)
         );
         rules.add(new GatewayFlowRule("aliyun_route")
@@ -365,7 +368,7 @@ public class SentinelFilterConfiguration {
                 )
         );
         */
-
+        GatewayRuleManager.getRules().clear();
         GatewayRuleManager.loadRules(rules);
     }
 }
