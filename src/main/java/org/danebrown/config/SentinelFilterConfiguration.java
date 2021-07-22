@@ -28,6 +28,7 @@ import com.alibaba.csp.sentinel.slots.block.degrade.circuitbreaker.EventObserver
 import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
+import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowException;
 import com.alibaba.csp.sentinel.slots.statistic.StatisticSlotCallbackRegistry;
 import com.alibaba.csp.sentinel.util.TimeUtil;
 import com.alibaba.fastjson.JSON;
@@ -139,8 +140,15 @@ public class SentinelFilterConfiguration {
                 ResponseMod responseMod = new ResponseMod();
                 responseMod.setErrorCode("ERROR");
                 responseMod.setBody(t.getMessage());
-                responseMod.setCode(HttpStatus.BANDWIDTH_LIMIT_EXCEEDED.toString());
-                if(t instanceof FlowException){
+                if(t instanceof ParamFlowException){
+                    responseMod.setCode(HttpStatus.CHECKPOINT.toString());
+                    responseMod.setErrorCode("ParamFlowException:"+t.getMessage());
+
+                    responseMod.setBody(JSON.toJSONString(((ParamFlowException) t).getRule())
+                            +"----->param:"+((ParamFlowException) t).getLimitParam()
+                    );
+                }
+                else if(t instanceof FlowException){
                     log.info("FlowException");
 
                     FlowException flowException = (FlowException) t;
@@ -268,10 +276,11 @@ public class SentinelFilterConfiguration {
 
         //QPS限流
         FlowRule rule2 = new FlowRule();
-        rule2.setResource("testApi");
-        rule2.setCount(1);
+        rule2.setResource("test");
+        rule2.setCount(10);
         rule2.setGrade(RuleConstant.FLOW_GRADE_QPS);
         rule2.setLimitApp("default");
+
         rules.add(rule2);
 
         //混合
@@ -293,6 +302,10 @@ public class SentinelFilterConfiguration {
 
         FlowRuleManager.loadRules(rules);
     }
+
+    /**
+     * 自定义的API
+     */
     private void initCustomizedApis() {
         Set<ApiDefinition> definitions = new HashSet<>();
         ApiDefinition api1 = new ApiDefinition("testApi")
@@ -318,7 +331,28 @@ public class SentinelFilterConfiguration {
                 .setControlBehavior(RuleConstant.CONTROL_BEHAVIOR_RATE_LIMITER)
                 .setGrade(RuleConstant.FLOW_GRADE_QPS)
                 .setResourceMode(SentinelGatewayConstants.RESOURCE_MODE_CUSTOM_API_NAME)
-                .setIntervalSec(1)
+                .setIntervalSec(60)
+                .setParamItem(new GatewayParamFlowItem()
+                        .setFieldName("blue")
+                        .setParseStrategy(SentinelGatewayConstants.PARAM_PARSE_STRATEGY_HEADER)
+                        .setMatchStrategy(SentinelGatewayConstants.PARAM_MATCH_STRATEGY_EXACT)
+                        .setPattern("100")
+                )
+        );
+        rules.add(new GatewayFlowRule("test")
+                .setCount(1)
+                .setControlBehavior(RuleConstant.CONTROL_BEHAVIOR_RATE_LIMITER)
+                .setGrade(RuleConstant.FLOW_GRADE_QPS)
+                .setResourceMode(SentinelGatewayConstants.RESOURCE_MODE_ROUTE_ID)
+                .setIntervalSec(60)
+                .setParamItem(new GatewayParamFlowItem()
+                        .setParseStrategy(SentinelGatewayConstants.PARAM_PARSE_STRATEGY_HEADER)
+                        .setFieldName("blue")
+                        .setParseStrategy(SentinelGatewayConstants.PARAM_MATCH_STRATEGY_EXACT)
+                        .setPattern("200")
+
+                )
+
         );
         rules.add(new GatewayFlowRule("aliyun_route")
                 .setCount(2)
