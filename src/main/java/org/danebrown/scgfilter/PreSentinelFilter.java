@@ -39,7 +39,10 @@ import static org.danebrown.config.SentinelConst.OBJECT_KEY;
  */
 @Slf4j
 public class PreSentinelFilter implements GlobalFilter, Ordered {
-
+    private String USE_SENTINEL="USE_SENTINEL";
+    private boolean isUseSentinel = Boolean.parseBoolean(System.getProperty(
+            USE_SENTINEL,
+            "false"));
     private final int order;
 
     public PreSentinelFilter() {
@@ -74,44 +77,47 @@ public class PreSentinelFilter implements GlobalFilter, Ordered {
             }
         })
         ;
-        String resourceKey = resourceParser.parse(exchange);
-        if(!Strings.isNullOrEmpty(resourceKey)){
-            Object[] params = paramParser.parseParameterFor(resourceKey, exchange,
-                    r -> r.getResourceMode() == SentinelGatewayConstants.RESOURCE_MODE_CUSTOM_API_NAME);
-            String origin = Optional.ofNullable(GatewayCallbackManager.getRequestOriginParser())
-                    .map(f -> f.apply(exchange))
-                    .orElse("default");
-            asyncResult = asyncResult.transform(
-                    new SentinelReactorTransformer<>(new EntryConfig(resourceKey, ResourceTypeConstants.COMMON_API_GATEWAY,
-                            EntryType.IN, 1, params, new ContextConfig(contextName(resourceKey), origin)))
-            );
+        if(isUseSentinel){
+                    String resourceKey = resourceParser.parse(exchange);
+                    if(!Strings.isNullOrEmpty(resourceKey)){
+                        Object[] params = paramParser.parseParameterFor(resourceKey, exchange,
+                                r -> r.getResourceMode() == SentinelGatewayConstants.RESOURCE_MODE_CUSTOM_API_NAME);
+                        String origin = Optional.ofNullable(GatewayCallbackManager.getRequestOriginParser())
+                                .map(f -> f.apply(exchange))
+                                .orElse("default");
+                        asyncResult = asyncResult.transform(
+                                new SentinelReactorTransformer<>(new EntryConfig(resourceKey, ResourceTypeConstants.COMMON_API_GATEWAY,
+                                        EntryType.IN, 1, params, new ContextConfig(contextName(resourceKey), origin)))
+                        );
+                    }
+
+                    if (route != null) {
+
+                        String routeId = route.getId();
+                        Object[] params = paramParser.parseParameterFor(routeId, exchange,
+                                r -> r.getResourceMode() == SentinelGatewayConstants.RESOURCE_MODE_ROUTE_ID);
+                        String origin = Optional.ofNullable(GatewayCallbackManager.getRequestOriginParser())
+                                .map(f -> f.apply(exchange))
+                                .orElse("");
+                        asyncResult = asyncResult.transform(
+                                new SentinelReactorTransformer<>(new EntryConfig(routeId,
+                                        ResourceTypeConstants.COMMON,
+                                        EntryType.IN, 1, params, new ContextConfig(contextName(routeId), origin)))
+                        );
+                    }
+
+                    Set<String> matchingApis = pickMatchingApiDefinitions(exchange);
+                    for (String apiName : matchingApis) {
+                        Object[] params = paramParser.parseParameterFor(apiName, exchange,
+                                r -> r.getResourceMode() == SentinelGatewayConstants.RESOURCE_MODE_CUSTOM_API_NAME);
+                        asyncResult = asyncResult.transform(
+                                new SentinelReactorTransformer<>(new EntryConfig(apiName,
+                                        ResourceTypeConstants.COMMON_API_GATEWAY,
+                                        EntryType.IN, 1, params))
+                        );
+                    }
         }
 
-        if (route != null) {
-
-            String routeId = route.getId();
-            Object[] params = paramParser.parseParameterFor(routeId, exchange,
-                    r -> r.getResourceMode() == SentinelGatewayConstants.RESOURCE_MODE_ROUTE_ID);
-            String origin = Optional.ofNullable(GatewayCallbackManager.getRequestOriginParser())
-                    .map(f -> f.apply(exchange))
-                    .orElse("");
-            asyncResult = asyncResult.transform(
-                    new SentinelReactorTransformer<>(new EntryConfig(routeId,
-                            ResourceTypeConstants.COMMON,
-                            EntryType.IN, 1, params, new ContextConfig(contextName(routeId), origin)))
-            );
-        }
-
-        Set<String> matchingApis = pickMatchingApiDefinitions(exchange);
-        for (String apiName : matchingApis) {
-            Object[] params = paramParser.parseParameterFor(apiName, exchange,
-                    r -> r.getResourceMode() == SentinelGatewayConstants.RESOURCE_MODE_CUSTOM_API_NAME);
-            asyncResult = asyncResult.transform(
-                    new SentinelReactorTransformer<>(new EntryConfig(apiName,
-                            ResourceTypeConstants.COMMON_API_GATEWAY,
-                            EntryType.IN, 1, params))
-            );
-        }
 
         return asyncResult;
     }

@@ -23,6 +23,10 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by danebrown on 2021/2/24
@@ -33,14 +37,27 @@ import java.util.concurrent.ThreadLocalRandom;
 @Service
 @Slf4j
 public class PostMockFilter implements GlobalFilter, Ordered {
-
+    Lock lock = new ReentrantLock();
+    Condition condition = lock.newCondition();
     Flux<String> matcher = Flux.fromArray(new String[]{"block", "mix", "thread"});
 
     @SneakyThrows
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        if (!matcher.any(s -> exchange.getRequest().getURI().getPath().contains(s)).block()) {
-            return chain.filter(exchange);
+//        if (!matcher.any(s -> exchange.getRequest().getURI().getPath().contains(s)).block()) {
+//            return chain.filter(exchange);
+//        }
+        try{
+
+            lock.lock();
+            condition.await(500, TimeUnit.MILLISECONDS);
+
+        }
+        catch (Exception ex){
+            log.error("出现异常{}",ex.getMessage());
+        }
+        finally {
+            lock.unlock();
         }
 
         log.info("PreMockFilter");

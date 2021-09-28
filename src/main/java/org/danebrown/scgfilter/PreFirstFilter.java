@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.netty.ReactorNetty;
 
 import static org.danebrown.config.SentinelConst.OBJECT_KEY;
 
@@ -23,6 +24,11 @@ import static org.danebrown.config.SentinelConst.OBJECT_KEY;
 @Service
 public class PreFirstFilter implements GlobalFilter, Ordered {
     private final int order;
+    private static String USE_PUBLISH_ON="USE_PUBLISH_ON";
+    private boolean isPublishOn = Boolean.parseBoolean(System.getProperty(
+            USE_PUBLISH_ON,
+            "false"));
+
     Gson gson = new Gson();
 
     public PreFirstFilter() {
@@ -38,7 +44,7 @@ public class PreFirstFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
 
-        return Mono.fromCallable(() -> {
+         Mono<String> ret = Mono.fromCallable(() -> {
             ThreadLocalContext.idx.set("123");//放置上下文
             RequestMod testMod = new RequestMod();
             testMod.getHeader().put("channel", "ap");
@@ -50,9 +56,12 @@ public class PreFirstFilter implements GlobalFilter, Ordered {
             log.info("PreFirstFilter fromRunnable");
             return "ok";
             //这里放最最最开始那个_filter部分的逻辑
-        })
-                .publishOn(Schedulers.elastic())
-                .flatMap((a) -> chain.filter(exchange));
+        });
+                if(isPublishOn){
+                    ret = ret.publishOn(Schedulers.boundedElastic());
+                }
+
+        return ret.flatMap((a) -> chain.filter(exchange));
 
 
     }
