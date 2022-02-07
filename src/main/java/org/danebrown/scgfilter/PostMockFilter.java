@@ -47,18 +47,18 @@ public class PostMockFilter implements GlobalFilter, Ordered {
 //        if (!matcher.any(s -> exchange.getRequest().getURI().getPath().contains(s)).block()) {
 //            return chain.filter(exchange);
 //        }
-        try{
-
-            lock.lock();
-            condition.await(500, TimeUnit.MILLISECONDS);
-
-        }
-        catch (Exception ex){
-            log.error("出现异常{}",ex.getMessage());
-        }
-        finally {
-            lock.unlock();
-        }
+//        try{
+//
+////            lock.lock();
+////            condition.await(500, TimeUnit.MILLISECONDS);
+//
+//        }
+//        catch (Exception ex){
+//            log.error("出现异常{}",ex.getMessage());
+//        }
+//        finally {
+//            lock.unlock();
+//        }
 
         log.info("PreMockFilter");
         ServerHttpResponse response = exchange.getResponse();

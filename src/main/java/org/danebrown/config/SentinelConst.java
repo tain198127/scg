@@ -8,4 +8,8 @@ package org.danebrown.config;
  */
 public class SentinelConst {
     public static final String OBJECT_KEY="object_key";
+    private static String USE_SENTINEL="USE_SENTINEL";
+    public static boolean isUseSentinel = Boolean.parseBoolean(System.getProperty(
+            USE_SENTINEL,
+            "false"));
 }

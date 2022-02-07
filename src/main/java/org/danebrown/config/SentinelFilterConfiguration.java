@@ -32,12 +32,20 @@ import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowException;
 import com.alibaba.csp.sentinel.slots.statistic.StatisticSlotCallbackRegistry;
 import com.alibaba.csp.sentinel.util.TimeUtil;
 import com.alibaba.fastjson.JSON;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.danebrown.exception.SentinelExceptionHandler;
 import org.danebrown.mode.RequestMod;
 import org.danebrown.mode.ResponseMod;
 import org.danebrown.scgfilter.PreSentinelFilter;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.embedded.netty.NettyReactiveWebServerFactory;
+import org.springframework.boot.web.reactive.server.ReactiveWebServerFactory;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,6 +62,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -61,6 +70,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.danebrown.config.SentinelConst.OBJECT_KEY;
+import static org.danebrown.config.SentinelConst.isUseSentinel;
 
 /**
  * Created by danebrown on 2021/2/24
@@ -109,11 +119,13 @@ public class SentinelFilterConfiguration {
 
     @PostConstruct
     public void doInit() {
-        initCustomizedApis();
-        initGatewayRules();
-        loadDegradeRules();
-        loadFlowRules();
-        registerCbk();
+        if(isUseSentinel){
+            initCustomizedApis();
+            initGatewayRules();
+            loadDegradeRules();
+            loadFlowRules();
+            registerCbk();
+        }
     }
     private void registerCbk(){
 //        GatewayCallbackManager.setRequestOriginParser((se)->{

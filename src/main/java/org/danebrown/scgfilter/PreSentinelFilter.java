@@ -12,6 +12,7 @@ import com.alibaba.csp.sentinel.adapter.reactor.EntryConfig;
 import com.alibaba.csp.sentinel.adapter.reactor.SentinelReactorTransformer;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
+import org.danebrown.config.SentinelConst;
 import org.danebrown.mode.RequestMod;
 import org.danebrown.praser.CustomHeaderExchangeItemParser;
 import org.danebrown.praser.SentinelResourceParser;
@@ -39,10 +40,7 @@ import static org.danebrown.config.SentinelConst.OBJECT_KEY;
  */
 @Slf4j
 public class PreSentinelFilter implements GlobalFilter, Ordered {
-    private String USE_SENTINEL="USE_SENTINEL";
-    private boolean isUseSentinel = Boolean.parseBoolean(System.getProperty(
-            USE_SENTINEL,
-            "false"));
+
     private final int order;
 
     public PreSentinelFilter() {
@@ -77,7 +75,7 @@ public class PreSentinelFilter implements GlobalFilter, Ordered {
             }
         })
         ;
-        if(isUseSentinel){
+        if(SentinelConst.isUseSentinel){
                     String resourceKey = resourceParser.parse(exchange);
                     if(!Strings.isNullOrEmpty(resourceKey)){
                         Object[] params = paramParser.parseParameterFor(resourceKey, exchange,

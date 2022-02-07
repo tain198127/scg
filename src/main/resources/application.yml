@@ -1,5 +1,8 @@
 server:
-  port: 8090
+  port: 8080
+  netty:
+    idle-timeout: 2000
+    connection-timeout: 2000
 spring:
   application:
     name: spring-cloud-gateway
@@ -27,10 +30,10 @@ spring:
           predicates:
             - Method=POST,GET
             - Path=/test/**,/block/**,/thread/**,/mix/**,/other/**,/forward/**
-          filters:
-            - AddRequestHeader=X-Request-red, blue
-            - AddRequestParameter=red, blue
-            - RewritePath=/[a-zA-z0-9]*/, /seq/
+#          filters:
+#            - AddRequestHeader=X-Request-red, blue
+#            - AddRequestParameter=red, blue
+#            - RewritePath=/[a-zA-z0-9]*/, /seq/
 
 #        - id: thread
 #          uri: http://127.0.0.1:8080/seq
