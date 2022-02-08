@@ -3,6 +3,7 @@ server:
   netty:
     idle-timeout: 2000
     connection-timeout: 2000
+  connection-timeout: 2000
 spring:
   application:
     name: spring-cloud-gateway

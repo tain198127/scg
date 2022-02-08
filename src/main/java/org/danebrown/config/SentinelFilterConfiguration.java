@@ -70,7 +70,6 @@ import java.util.List;
 import java.util.Set;
 
 import static org.danebrown.config.SentinelConst.OBJECT_KEY;
-import static org.danebrown.config.SentinelConst.isUseSentinel;
 
 /**
  * Created by danebrown on 2021/2/24
@@ -115,11 +114,28 @@ public class SentinelFilterConfiguration {
         // Register the block exception handler for Spring Cloud Gateway.
         return new SentinelGatewayBlockExceptionHandler(viewResolvers, serverCodecConfigurer);
     }
-
+    @Bean
+    public ReactiveWebServerFactory reactiveWebServerFactory(
+            @Value("${server.netty.idle-timeout}") Duration idleTimeout) {
+        int seconds = (int) idleTimeout.getSeconds();
+        final NettyReactiveWebServerFactory factory = new NettyReactiveWebServerFactory();
+        factory.addServerCustomizers(server ->
+                server.tcpConfiguration(tcp ->
+                        tcp.bootstrap(bootstrap -> bootstrap.childHandler(new ChannelInitializer<Channel>() {
+                            @Override
+                            protected void initChannel(Channel channel) {
+                                // 仅处理slow read，不处理slow headers等问题
+                                channel.pipeline().addLast(new ReadTimeoutHandler(seconds));
+//                                channel.pipeline().addLast(new WriteTimeoutHandler(seconds));
+                            }
+                        }))
+                ));
+        return factory;
+    }
 
     @PostConstruct
     public void doInit() {
-        if(isUseSentinel){
+        if(SentinelConst.isUseSentinel){
             initCustomizedApis();
             initGatewayRules();
             loadDegradeRules();
