@@ -96,6 +96,21 @@
             <artifactId>guava</artifactId>
             <version>30.1-jre</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-function-compiler</artifactId>
+            <version>3.0.14.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-function-core</artifactId>
+            <version>3.0.14.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-function-web</artifactId>
+            <version>3.0.14.RELEASE</version>
+        </dependency>
 
 
     </dependencies>
@@ -112,6 +127,13 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-gateway-dependencies</artifactId>
                 <version>${springcloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-function-dependencies</artifactId>
+                <version>3.0.14.RELEASE</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
